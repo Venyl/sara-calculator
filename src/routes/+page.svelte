@@ -1,9 +1,12 @@
 <script lang="ts">
 	import { createCombobox, melt, type ComboboxOptionProps } from '@melt-ui/svelte';
+	import { slide } from 'svelte/transition';
 
 	const clothingGroups: Record<string, string[]> = {
 		set1: ['tshirt', 'pants', 'jacket'],
-		set2: ['hat', 'shoes']
+		set2: ['hat', 'shoes'],
+		set3: ['tshirt', 'pants', 'jacket'],
+		set4: ['hat', 'shoes']
 	};
 
 	function toOption(item: string): ComboboxOptionProps<string> {
@@ -15,21 +18,27 @@
 		states: { open, inputValue, touchedInput, selected },
 		helpers: { isSelected }
 	} = createCombobox<string, true>({
-		multiple: true
+		multiple: true,
+		forceVisible: true
 	});
 
+	function filterGroup(key: keyof typeof clothingGroups, searchValue: string) {
+		if (key.includes(searchValue.toLowerCase())) {
+			return clothingGroups[key];
+		}
+		return clothingGroups[key].filter((clothing) => {
+			const normalizedInput = searchValue.toLowerCase();
+			return clothing.toLowerCase().includes(normalizedInput);
+		});
+	}
+
 	$: filteredClothing = $touchedInput
-		? {
-				set1: clothingGroups.set1.filter((clothing) => {
-					const normalizedInput = $inputValue.toLowerCase();
-					return clothing.toLowerCase().includes(normalizedInput);
-				}),
-				set2: clothingGroups.set2.filter((clothing) => {
-					const normalizedInput = $inputValue.toLowerCase();
-					return clothing.toLowerCase().includes(normalizedInput);
-				})
-			}
+		? Object.fromEntries(
+				Object.entries(clothingGroups).map(([key, _]) => [key, filterGroup(key, $inputValue)])
+			)
 		: clothingGroups;
+
+	$: noResults = Object.values(filteredClothing).every((clothes) => clothes.length === 0);
 
 	function selectGroup(key: keyof typeof clothingGroups) {
 		const clothes = clothingGroups[key];
@@ -53,41 +62,66 @@
 	}
 </script>
 
-<!-- <pre>{JSON.stringify($inputValue, null, 2)}</pre>
-<pre>{JSON.stringify($selected, null, 2)}</pre> -->
-<div>
+<div class="grid max-w-max">
 	<!-- svelte-ignore a11y-label-has-associated-control - $label contains the 'for' attribute -->
-	<label use:melt={$label}>
-		<span>Select clothing</span>
-	</label>
-	<input use:melt={$input} />
+	<label use:melt={$label} class="text-md mb-1"> Clothing </label>
+	<input
+		use:melt={$input}
+		class="outline-0 rounded-md px-1 py-0.5 bg-surface-500 border-surface-300"
+	/>
 </div>
 {#if $open}
-	<ul use:melt={$menu} class="ring-1">
-		{#each Object.entries(filteredClothing) as [key, clothes]}
-			{#if clothes.length > 0}
-				{@const groupSelected = clothes.every((clothing) =>
-					$selected?.find((selectedItem) => selectedItem.value === clothing)
-				)}
-				<div use:melt={$group(key)}>
-					<button
-						use:melt={$groupLabel(key)}
-						data-selected={groupSelected}
-						class="text-xl w-full text-left cursor-pointer bg-amber-100 data-[selected=true]:bg-pink-200"
-						on:click={() => selectGroup(key)}>{key}</button
+	<ul
+		use:melt={$menu}
+		transition:slide={{ duration: 200 }}
+		class="rounded-md overflow-clip bg-surface-700 px-2 py-4 max-h-72 overflow-y-auto"
+	>
+		{#if noResults}
+			<li class="text-center text-surface-100 font-bold">No results</li>
+		{:else}
+			{#each Object.entries(filteredClothing) as [key, clothes]}
+				{#if clothes.length > 0}
+					{@const groupSelected = clothes.every((clothing) =>
+						$selected?.find((selectedItem) => selectedItem.value === clothing)
+					)}
+					<div
+						use:melt={$group(key)}
+						class="space-y-2 py-1 rounded-md has-[button:hover]:bg-surface-600"
 					>
-
-					{#each clothes as clothing}
-						<li
-							use:melt={$option(toOption(clothing))}
-							data-selected={$isSelected(clothing)}
-							class="pl-2 cursor-pointer hover:bg-gray-100 data-[selected=true]:bg-green-200 data-[selected=true]:hover:bg-red-200"
+						<button
+							use:melt={$groupLabel(key)}
+							data-selected={groupSelected}
+							class="text-xl mx-2 w-full text-left cursor-pointer rounded-md"
+							on:click={() => selectGroup(key)}>{key}</button
 						>
-							<span use:melt={$label}>{clothing}</span>
-						</li>
-					{/each}
-				</div>
-			{/if}
-		{/each}
+
+						{#each clothes as clothing}
+							<li
+								use:melt={$option(toOption(clothing))}
+								class="flex items-center gap-1 py-1 px-2 rounded-md cursor-pointer hover:bg-surface-600"
+							>
+								<div class="size-4">
+									{#if $isSelected(clothing)}
+										<svg
+											xmlns="http://www.w3.org/2000/svg"
+											viewBox="0 0 16 16"
+											fill="currentColor"
+											class="text-primary-300"
+										>
+											<path
+												fill-rule="evenodd"
+												d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z"
+												clip-rule="evenodd"
+											/>
+										</svg>
+									{/if}
+								</div>
+								<span use:melt={$label}>{clothing}</span>
+							</li>
+						{/each}
+					</div>
+				{/if}
+			{/each}
+		{/if}
 	</ul>
 {/if}
