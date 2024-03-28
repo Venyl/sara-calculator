@@ -21,3 +21,33 @@
 	--color-primary-800: oklch(38.24% 0.089 300.91);
 	--color-primary-900: oklch(33.24% 0.079 300.91);
 }
+
+:root {
+	--sb-track-color: #0c0a0e20;
+	--sb-thumb-color: #6d5494;
+	--sb-size: 6px;
+}
+
+::-webkit-scrollbar {
+	width: var(--sb-size);
+}
+
+body::-webkit-scrollbar {
+	width: calc(var(--sb-size) * 2);
+}
+
+::-webkit-scrollbar-track {
+	background: var(--sb-track-color);
+	border-radius: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+	background: var(--sb-thumb-color);
+	border-radius: 6px;
+}
+
+@supports not selector(::-webkit-scrollbar) {
+	:root {
+		scrollbar-color: var(--sb-thumb-color) var(--sb-track-color);
+	}
+}
