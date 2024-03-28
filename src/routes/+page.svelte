@@ -84,21 +84,18 @@
 					{@const groupSelected = clothes.every((clothing) =>
 						$selected?.find((selectedItem) => selectedItem.value === clothing)
 					)}
-					<div
-						use:melt={$group(key)}
-						class="space-y-2 py-1 rounded-md has-[button:hover]:bg-surface-600"
-					>
+					<div use:melt={$group(key)} class="py-1 rounded-md has-[button:hover]:bg-surface-600">
 						<button
 							use:melt={$groupLabel(key)}
 							data-selected={groupSelected}
-							class="text-xl mx-2 w-full text-left cursor-pointer rounded-md"
+							class="text-lg font-medium text-primary-100 mx-2 w-full text-left cursor-pointer rounded-md"
 							on:click={() => selectGroup(key)}>{key}</button
 						>
 
 						{#each clothes as clothing}
 							<li
 								use:melt={$option(toOption(clothing))}
-								class="flex items-center gap-1 py-1 px-2 rounded-md cursor-pointer hover:bg-surface-600"
+								class="flex items-center gap-1 p-2 rounded-md cursor-pointer hover:bg-surface-600"
 							>
 								<div class="size-4">
 									{#if $isSelected(clothing)}
@@ -106,7 +103,7 @@
 											xmlns="http://www.w3.org/2000/svg"
 											viewBox="0 0 16 16"
 											fill="currentColor"
-											class="text-primary-300"
+											class="text-primary-200"
 										>
 											<path
 												fill-rule="evenodd"
