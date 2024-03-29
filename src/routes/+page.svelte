@@ -1,23 +1,17 @@
 <script lang="ts">
 	import { createCombobox, melt, type ComboboxOptionProps } from '@melt-ui/svelte';
 	import { slide } from 'svelte/transition';
+	import { clothingGroups, type Clothing } from '$lib/clothes';
 
-	const clothingGroups: Record<string, string[]> = {
-		set1: ['tshirt', 'pants', 'jacket'],
-		set2: ['hat', 'shoes'],
-		set3: ['tshirt', 'pants', 'jacket'],
-		set4: ['hat', 'shoes']
-	};
-
-	function toOption(item: string): ComboboxOptionProps<string> {
-		return { label: item, value: item };
+	function toOption(item: Clothing): ComboboxOptionProps<Clothing> {
+		return { value: item, label: item.name, disabled: false };
 	}
 
 	const {
 		elements: { menu, input, option, label, group, groupLabel },
 		states: { open, inputValue, touchedInput, selected },
 		helpers: { isSelected }
-	} = createCombobox<string, true>({
+	} = createCombobox<Clothing, true>({
 		multiple: true,
 		forceVisible: true
 	});
@@ -28,7 +22,7 @@
 		}
 		return clothingGroups[key].filter((clothing) => {
 			const normalizedInput = searchValue.toLowerCase();
-			return clothing.toLowerCase().includes(normalizedInput);
+			return clothing.name.toLowerCase().includes(normalizedInput);
 		});
 	}
 
@@ -40,14 +34,26 @@
 
 	$: noResults = Object.values(filteredClothing).every((clothes) => clothes.length === 0);
 
+	$: selectedGroups = Object.keys(clothingGroups).filter((clothingGroup) =>
+		clothingGroups[clothingGroup].some((clothing) =>
+			$selected?.find((selectedItem) => selectedItem.label === clothing.name)
+		)
+	);
+
 	function selectGroup(key: keyof typeof clothingGroups) {
 		const clothes = clothingGroups[key];
 		if (
 			clothes.every((clothing) =>
-				$selected?.find((selectedItem) => selectedItem.value === clothing)
+				$selected?.find((selectedItem) => {
+					console.log(selectedItem);
+					console.log(clothing);
+					return selectedItem.label === clothing.name;
+				})
 			)
 		) {
-			$selected = $selected?.filter((selectedItem) => !clothes.includes(selectedItem.value));
+			$selected = $selected?.filter(
+				(selectedItem) => !clothes.find((clothing) => clothing.name === selectedItem.label)
+			);
 			return;
 		}
 		$selected = [
@@ -55,7 +61,7 @@
 			...clothes
 				.filter(
 					(clothing) =>
-						$selected?.find((selectedItem) => selectedItem.value === clothing) === undefined
+						$selected?.find((selectedItem) => selectedItem.label === clothing.name) === undefined
 				)
 				.map(toOption)
 		];
@@ -82,14 +88,14 @@
 			{#each Object.entries(filteredClothing) as [key, clothes]}
 				{#if clothes.length > 0}
 					{@const groupSelected = clothes.every((clothing) =>
-						$selected?.find((selectedItem) => selectedItem.value === clothing)
+						$selected?.find((selectedItem) => selectedItem.label === clothing.name)
 					)}
 					<div use:melt={$group(key)} class="py-1 rounded-md has-[button:hover]:bg-surface-600">
 						<button
 							use:melt={$groupLabel(key)}
 							data-selected={groupSelected}
 							class="text-lg font-medium text-primary-100 mx-2 w-full text-left cursor-pointer rounded-md"
-							on:click={() => selectGroup(key)}>{key}</button
+							on:click={() => selectGroup(key)}>{key.replace(/_/g, ' ')}</button
 						>
 
 						{#each clothes as clothing}
@@ -113,7 +119,7 @@
 										</svg>
 									{/if}
 								</div>
-								<span use:melt={$label}>{clothing}</span>
+								<span use:melt={$label}>{clothing.name}</span>
 							</li>
 						{/each}
 					</div>
@@ -122,3 +128,25 @@
 		{/if}
 	</ul>
 {/if}
+<div class="flex items-center mt-4 gap-1">
+	<svg class="mr-1" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24"
+		><path
+			fill="none"
+			stroke="currentColor"
+			stroke-linecap="round"
+			stroke-linejoin="round"
+			stroke-width="2"
+			d="M20.38 3.46L16 2a4 4 0 0 1-8 0L3.62 3.46a2 2 0 0 0-1.34 2.23l.58 3.47a1 1 0 0 0 .99.84H6v10c0 1.1.9 2 2 2h8a2 2 0 0 0 2-2V10h2.15a1 1 0 0 0 .99-.84l.58-3.47a2 2 0 0 0-1.34-2.23"
+		/></svg
+	>
+	<span class="font-medium">{$selected?.length ?? 0}</span><span class="text-sm">/</span><span
+		class="font-medium">{Object.values(clothingGroups).flat().length}</span
+	>
+</div>
+<div>
+	<div>Collections</div>
+	<div>
+		{selectedGroups.map((selectedGroup) => selectedGroup.replace('_', ' ')).join(', ')}
+	</div>
+</div>
+<!-- <pre>{JSON.stringify($selected, null, 2)}</pre> -->

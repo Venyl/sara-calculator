@@ -13,6 +13,6 @@
 	<div class="bg-primary-800 size-16"></div>
 	<div class="bg-primary-900 size-16"></div>
 </div> -->
-<main class="max-w-7xl mx-auto my-8">
+<main class="max-w-5xl mx-auto my-8">
 	<slot />
 </main>
