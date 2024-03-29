@@ -35,7 +35,7 @@
 	$: noResults = Object.values(filteredClothing).every((clothes) => clothes.length === 0);
 
 	$: selectedGroups = Object.keys(clothingGroups).filter((clothingGroup) =>
-		clothingGroups[clothingGroup].some((clothing) =>
+		clothingGroups[clothingGroup].every((clothing) =>
 			$selected?.find((selectedItem) => selectedItem.label === clothing.name)
 		)
 	);
